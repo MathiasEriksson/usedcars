@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import scrapy
-
+import unicodedata
 
 class VaihtoautoSpider(scrapy.Spider):
     name = 'vaihtoauto'
@@ -16,9 +16,18 @@ class VaihtoautoSpider(scrapy.Spider):
         # add follow pagination links
 
     def parse_car(self, response):
-        
+
+        data_table = response.xpath('//table[@class="data_table"]')
+
         yield {
             'manufacturer': response.xpath('//*[@id="heightForSlogan"]/h1/a/span/text()').get().strip(),
             'model': response.xpath('//*[@id="heightForSlogan"]/h1/a/span/span/text()').get().strip(),
             'price': response.xpath('//*[@id="rightLogoWrap"]/span/span/span/text()').get().strip(),
+            'year_model': self.year_model_parser(data_table),
         }
+
+    def year_model_parser(self, data_table):
+        year_string_raw = data_table.xpath('.//tr[1]/td[2]/text()').get()
+        year_string = unicodedata.normalize("NFKD", year_string_raw).strip()
+        year = year_string.split()[0]
+        return year
